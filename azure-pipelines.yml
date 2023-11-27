@@ -8,7 +8,7 @@ jobs:
 - job: Build
   displayName: 'Build job'
   pool:
-    name: testing
+    name: testing ## Ketu po perdor self-hosted agent per ti ber run job. e kam instaluar ne 1 vm me ubuntu OS
   steps:
   - checkout: self
     persistCredentials: true
