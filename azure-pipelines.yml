@@ -1,0 +1,121 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+# trigger:
+# - main
+
+# resources:
+# - repo: self
+
+# variables:
+#   tag: '$(Build.BuildId)'
+
+#stages:
+# - stage: Build
+#   displayName: Build Docker Image
+#   jobs:
+#   - job: Build
+#     displayName: Build
+#     pool:
+#       name: testing
+#     steps:
+#     - script: |
+#         docker login -u $(DOCKER_REGISTRY_USERNAME) -p $(DOCKER_REGISTRY_PASSWORD)
+#         docker build -t react-node:$(tag) .
+#         docker push henribufii/react-node:$(tag)
+#       displayName: 'Build Docker Image'
+
+# - stage: Deploy
+#   displayName: Deploy to Azure Web App
+#   jobs:
+#   - job: Deploy
+#     displayName: Deploy
+#     pool:
+#       name: testing
+#     steps:
+#     - task: AzureWebAppContainer@1
+#       inputs:
+#         azureSubscription: 'Azure subscription 1 (a73c2dc9-f21b-41c9-8802-d3f1584dbe2d)'
+#         appName: 'polymaths-test'
+#         deployToSlotOrASE: true
+#         resourceGroupName: 'polymaths-test_group'
+#         slotName: 'production'
+#         containers: 'henribufii/react-node:31'
+
+
+trigger:
+- main
+
+pr:
+- '*'
+
+jobs:
+- job: Build
+  displayName: 'Build job'
+  pool:
+    name: testing
+  steps:
+  - checkout: self
+    persistCredentials: true
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '16.x'
+    displayName: 'Install Node.js'
+
+  - script: |
+      npm install
+      npm run build --if-present
+    displayName: 'npm install and build'
+
+  # - task: ArchiveFiles@2
+  #   inputs:
+  #     rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+  #     includeRootFolder: false
+  #     archiveType: 'zip'
+  #     archiveFile: '$(Build.ArtifactStagingDirectory)/node-app.zip'
+  #     replaceExistingArchive: true
+  #   displayName: 'Archive files for deployment'
+
+  - publish: $(System.DefaultWorkingDirectory)
+    artifact: 'node-app'
+
+- job: Deploy
+  displayName: 'Deploy to Azure Web App'
+  pool:
+    name: testing
+  dependsOn: Build
+  steps:
+  - download: current
+    artifact: node-app
+
+  # - task: ExtractFiles@1
+  #   inputs:
+  #     archiveFilePatterns: '$(Pipeline.Workspace)/node-app/release.zip'
+  #     destinationFolder: '$(Pipeline.Workspace)/node-app'
+  #   displayName: 'Extract artifact'
+
+  # - task: AzureRmWebAppDeployment@4
+  #   inputs:
+  #     azureSubscription: 'Azure subscription 1 (a73c2dc9-f21b-41c9-8802-d3f1584dbe2d)'
+  #     appType: 'webAppLinux'
+  #     appName: 'polymaths-test'
+  #     packageForLinux: '$(Pipeline.Workspace)/node-app'
+  #     enableCustomDeployment: true
+  #     deploymentSlot: 'production'
+  #     resourceGroupName: 'polymaths-test_group'
+  #     includeDatabases: false
+  #   displayName: 'Deploy to Azure Web App'
+  - task: AzureRmWebAppDeployment@4
+    inputs:
+      ConnectionType: 'AzureRM'
+      azureSubscription: 'Azure subscription 1 (a73c2dc9-f21b-41c9-8802-d3f1584dbe2d)'
+      appType: 'webAppLinux'
+      WebAppName: 'polymaths'
+      deployToSlotOrASE: true
+      ResourceGroupName: 'polymaths_group'
+      SlotName: 'production'
+      packageForLinux: '$(Pipeline.Workspace)/node-app'
+      RuntimeStack: 'NODE|16-lts'
+      StartupCommand: 'node index.js'
