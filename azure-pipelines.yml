@@ -35,6 +35,19 @@ jobs:
   - download: current
     artifact: node-app
 
+  # - task: AzureRmWebAppDeployment@4
+  #   inputs:
+  #     ConnectionType: 'AzureRM'
+  #     azureSubscription: 'Azure subscription 1 (a73c2dc9-f21b-41c9-8802-d3f1584dbe2d)'
+  #     appType: 'webAppLinux'
+  #     WebAppName: 'polymaths'
+  #     deployToSlotOrASE: true
+  #     ResourceGroupName: 'polymaths_group'
+  #     SlotName: 'production'
+  #     packageForLinux: '$(Pipeline.Workspace)/node-app'
+  #     RuntimeStack: 'NODE|16-lts'
+  #     StartupCommand: 'node index.js'
+
   - task: AzureRmWebAppDeployment@4
     inputs:
       ConnectionType: 'AzureRM'
@@ -42,7 +55,7 @@ jobs:
       appType: 'webAppLinux'
       WebAppName: 'polymaths'
       deployToSlotOrASE: true
-      ResourceGroupName: 'polymaths_group'
+      ResourceGroupName: 'polymaths_group-a2a4'
       SlotName: 'production'
       packageForLinux: '$(Pipeline.Workspace)/node-app'
       RuntimeStack: 'NODE|16-lts'
